@@ -49,9 +49,12 @@ class Piece:
 		return self.rotations
 
 	@staticmethod
-	def findOffset(listp):
+	def findXOffset(listp):
 		return max([tup[0] for tup in listp])
 
+	@staticmethod
+	def findYOffset(listp):
+		return max([tup[1]] for tup in listp)
 
 	def toStringHelper(self, rot):
 		grid = [
@@ -120,6 +123,11 @@ class PieceFactory:
 			return self.queuedPieces.pop()
 
 
+class State:
+	def __init__(self, board):
+		self.pf = board.pf
+		self.w = board.w
+		self.h = board.h
 
 
 b = Board(20, 10)
