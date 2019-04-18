@@ -49,12 +49,12 @@ class Piece:
 		return self.rotations
 
 	@staticmethod
-	def findXOffset(listp):
-		return max([tup[0] for tup in listp])
+	def findXOffset(rot):
+		return max([tup[0] for tup in rot])
 
 	@staticmethod
-	def findYOffset(listp):
-		return max([tup[1]] for tup in listp)
+	def findYOffset(rot):
+		return max([tup[1] for tup in rot])
 
 	def toStringHelper(self, rot):
 		grid = [
@@ -86,28 +86,28 @@ class PieceFactory:
 	@staticmethod
 	def getPiecesDict():
 		return {
-			'line'  : 	[[(0, 0), (0, 1), (0, 2), (0, 3)],
-			    		[(0, 0), (1, 0), (2, 0), (3, 0)]],
+			'line'  :   [[(0, 0), (0, 1), (0, 2), (0, 3)],
+						[(0, 0), (1, 0), (2, 0), (3, 0)]],
 
 			'square':   [[(0, 0), (0, 1), (1, 0), (1, 1)]],
 
-			'l-1'	:	[[(0, 0), (0, 1), (0, 2), (1, 2)],
+			'l-1'   :   [[(0, 0), (0, 1), (0, 2), (1, 2)],
 						[(0, 0), (1, 0), (0, 1), (2, 0)], 
 						[(0, 0), (1, 0), (1, 1), (1, 2)],
 						[(0, 1), (1, 1), (2, 1), (2, 0)]],
 
-			't'     :	[[(1, 0), (0, 1), (1, 1), (1, 2)],
+			't'     :   [[(1, 0), (0, 1), (1, 1), (1, 2)],
 						[(0, 0), (0, 1), (0, 2), (1, 1)],
 						[(0, 0), (1, 0), (2, 0), (1, 1)],
 						[(0, 1), (1, 1), (1, 0), (2, 1)]],
 
-			'dog-1'	:	[[(0, 0), (0, 1), (1, 1), (1, 2)],
+			'dog-1' :   [[(0, 0), (0, 1), (1, 1), (1, 2)],
 						[(1, 0), (2, 0), (1, 1), (0, 1)]],
 
 			'dog-2' :   [[(0,2),(0,1),(1,1),(1,0)],
 						[(0,0),(1,0),(1,1),(2, 1)]],
 
-			'l-2'	:	[[(0,0),(0,1),(0,2),(1,0)],
+			'l-2'   :   [[(0,0),(0,1),(0,2),(1,0)],
 						[(0,0),(0,1),(1,1),(2,1)],
 						[(0,2),(1,0),(1,1),(1,2)],
 						[(0,0),(1,0),(2,0),(2,1)]]
@@ -124,21 +124,149 @@ class PieceFactory:
 
 
 class State:
+	#board object stripped of methods, used to pass between
+	#eval and test functions
 	def __init__(self, board):
 		self.pf = board.pf
 		self.w = board.w
 		self.h = board.h
 
+	def printState(self):
+		h = [" ", "#", "@"]
+		for row in self.pf:
+			temp = ""
+			for ele in row:
+				temp += h[ele]
+			print "|" + temp + "|"
+
+
+		print "~"*(self.w + 2)
+		print 
+
+
+	def fill(self, pts):
+		for x, y in pts:
+			self.pf[y][x] = 1
+		return self
+
+	""" Find the y location of highest piece for evaluation """
+
+	def highestPiece(self):
+
+		for i in range(self.h):
+
+			for j in range(self.w):
+
+				if (self.pf[i][j]==1):
+
+					return (self.h-i)
+
+		return 0
+
+ 
+
+	""" Counts the caves in the current state """
+
+	def hermit(self):
+
+		count = 0
+
+		for i in range(self.h):
+
+			for j in range(self.w):
+
+				if (self.pf[i][j]==0):
+
+					#look above if above has piece then add to cave count
+
+					for k in range(i):
+
+						if (self.pf[k][j]==1):
+
+							count = count + 1
+
+		return count
+
+ 
+
+	def eval(self):
+
+		score = self.hermit()+self.highestPiece()
+
+		return score
+
+
+
+def test(state, rot, xval):
+	"""takes state, a specific rotation of a piece,
+	xvalue for key pixel
+
+	returns a state with the piece hard dropped
+	(or false in the case that the piece can't be placed)
+	"""
+
+	depth = 0
+
+
+	max_x = Piece.findXOffset(rot)
+	if xval > max_x: # if x invalid, test fails
+		#return False
+		pass
+
+	if not getPixels(state.pf, xval, 0, rot):
+		return False
+	else:
+		lastValidPlacement = getPixels(state.pf, xval, 0, rot)
+
+	for yval in range(0, state.h - Piece.findYOffset(rot) + 1):
+		t = getPixels(state.pf, xval, yval, rot)
+		
+		if t:
+			lastValidPlacement = t
+		else:
+			return lastValidPlacement
+
+	return lastValidPlacement
+		
+
+
+def getPixels(twoDimArr, row, col, pointsToCheck):
+	#makes sure rot can be placed at certain key pixel,
+	#if so, returns the pixels it would occupy, else False
+
+	points = []
+	for x, y in pointsToCheck:
+		try: 
+			if twoDimArr[col + y][row + x]:
+				return False
+			else:
+				points.append((row + x, col + y))
+
+			
+		except IndexError: 
+			return False
+
+	return points
+
+
+
+
+
+
 
 b = Board(20, 10)
 
-b.pf[2] = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
+p = Piece(PieceFactory.getPiecesDict()["l-2"])
 
+rot = p.getRotations()[1]
 
-p = Piece(PieceFactory.getPiecesDict()["dog-2"])
+s = State(b)
 
-print p 
+s.fill(test(s, rot, 0))
+s.fill(test(s, rot, 0))
+
+s.printState()
 
 
 
