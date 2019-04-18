@@ -1,3 +1,4 @@
+import random
 
 class Board:
 	def __init__ (self, h, w):
@@ -41,14 +42,82 @@ class Piece:
 	ie the 'line' piece when vertical would be:
 	{[0, 0] ... [0, 4]}"""
 
+	def __init__(self, rotations):
+		self.rotations = rotations
+
 	def getRotations(self):
-		pass
+		return self.rotations
+
+	@staticmethod
+	def findOffset(listp):
+		return max([tup[0] for tup in listp])
 
 
-	
+	def toStringHelper(self, rot):
+		grid = [
+				[" ", " ", " ", " "],
+				[" ", " ", " ", " "],
+				[" ", " ", " ", " "],
+				[" ", " ", " ", " "]
+			   ]
+		print self.rotations[rot]
+		for i, j in self.rotations[rot]:
+			grid[i][j] = "#"
+
+		return "\n".join(["".join(i) for i in grid if "#" in i]) 
+
+
+	def __str__(self):
+		return "\n \n".join([self.toStringHelper(i) for i in range(len(self.rotations))])
 
 
 
+class PieceFactory:
+	def __init__(self, bagLen = 1):
+		self.bagLen = 1
+		self.queuedPieces = []
+		#make pieces based on dict
+		self.possPieces = [Piece(value) for key, value in self.getPiecesDict()]
+
+
+	@staticmethod
+	def getPiecesDict():
+		return {
+			'line'  : 	[[(0, 0), (0, 1), (0, 2), (0, 3)],
+			    		[(0, 0), (1, 0), (2, 0), (3, 0)]],
+
+			'square':   [[(0, 0), (0, 1), (1, 0), (1, 1)]],
+
+			'l-1'	:	[[(0, 0), (0, 1), (0, 2), (1, 2)],
+						[(0, 0), (1, 0), (0, 1), (2, 0)], 
+						[(0, 0), (1, 0), (1, 1), (1, 2)],
+						[(0, 1), (1, 1), (2, 1), (2, 0)]],
+
+			't'     :	[[(1, 0), (0, 1), (1, 1), (1, 2)],
+						[(0, 0), (0, 1), (0, 2), (1, 1)],
+						[(0, 0), (1, 0), (2, 0), (1, 1)],
+						[(0, 1), (1, 1), (1, 0), (2, 1)]],
+
+			'dog-1'	:	[[(0, 0), (0, 1), (1, 1), (1, 2)],
+						[(1, 0), (2, 0), (1, 1), (0, 1)]],
+
+			'dog-2' :   [[(0,2),(0,1),(1,1),(1,0)],
+						[(0,0),(1,0),(1,1),(2, 1)]],
+
+			'l-2'	:	[[(0,0),(0,1),(0,2),(1,0)],
+						[(0,0),(0,1),(1,1),(2,1)],
+						[(0,2),(1,0),(1,1),(1,2)],
+						[(0,0),(1,0),(2,0),(2,1)]]
+
+		}
+
+	def nextPiece(self):
+		if self.queuedPieces:
+			return self.queuedPieces.pop()
+
+		else:
+			self.queuedPieces = random.shuffle(list(self.possPieces))
+			return self.queuedPieces.pop()
 
 
 
@@ -59,63 +128,12 @@ b.pf[2] = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
 
 
-b.printBoard()
+p = Piece(PieceFactory.getPiecesDict()["dog-2"])
 
-b.clearRows()
-
-b.printBoard()
-
-
-piecesDict = {
-	'line'  : 	[[(0, 0), (0, 1), (0, 2), (0, 3)],
-	    		[(0, 0), (1, 0), (2, 0), (3, 0)]],
-
-	'square':   [[(0, 0), (0, 1), (1, 0), (1, 1)]],
-
-	'l-1'	:	[[(0, 0), (0, 1), (0, 2), (1, 2)],
-				[(0, 0), (1, 0), (0, 1), (2, 0)], 
-				[(0, 0), (1, 0), (1, 1), (1, 2)],
-				[(0, 1), (1, 1), (1, 2), (0, 2)]],
-
-	't'     :	[[(1, 0), (0, 1), (1, 1), (1, 2)],
-				[(0, 0), (0, 1), (0, 2), (1, 1)],
-				[(0, 0), (1, 0), (2, 0), (1, 1)],
-				[(0, 1), (1, 0), (1, 1), (1, 2)]],
-
-	'dog-1'	:	[[(0, 0), (0, 1), (1, 1), (1, 2)],
-				[(1, 0), (1, 2), (1, 1), (0, 1)]]
-
-}
+print p 
 
 
 
-
-
-"""
-pieces:
-line:	[(0, 0), (0, 1), (0, 2), (0, 3)]
-	    [(0, 0), (1, 0), (2, 0), (3, 0)]
-square:
-		[(0, 0), (0, 1), (1, 0), (1, 1)]
-
-l-1:
-		[(0, 0), (0, 1), (0, 2), (1, 2)] L
-		[(0, 0), (1, 0), (0, 1), (2, 0)] 
-		[(0, 0), (1, 0), (1, 1), (1, 2)]
-		[(0, 1), (1, 1), (1, 2), (0, 2)]
-
-T:
-		[(1, 0), (0, 1), (1, 1), (1, 2)],
-		[(0, 0), (0, 1), (0, 2), (1, 1)],
-		[(0, 0), (1, 0), (2, 0), (1, 1)],
-		[(0, 1), (1, 0), (1, 1), (1, 2)]
-
-dog-1:
-		[(0, 0), (0, 1), (1, 1), (1, 2)]
-		[(1, 0), (1, 2), (1, 1), (0, 1)]
-
-
-"""
 
 
 
