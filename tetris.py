@@ -138,7 +138,9 @@ class State:
 				temp += h[ele]
 			print ("|" + temp + "|")
 		print ("~"*(self.w + 2))
-		print 
+		print "contig", self.contig()
+		print "height", self.highestPiece()
+		print "hermit", self.hermit()
 
 
 	def fill(self, pts):
@@ -148,8 +150,10 @@ class State:
 		return self
 
 	def clearRows(self):
+		count = 0
 		for i, row in enumerate(self.pf):
 			if State.isClearable(row):
+				count += 1
 				self.pf.remove(row)
 				
 				self.pf = [[0 for i in range(self.w)]] + self.pf
@@ -182,8 +186,30 @@ class State:
 							count = count + 1
 		return count
 
+	def contig(self):
+		count = 0
+		for i1, row in enumerate(self.pf[1:-1]):
+			for i2, e in enumerate(row[1:-1]):
+				if e:
+					if not (self.pf[i1][i2-1] and self.pf[i1][i2+1] and self.pf[i1-1][i2] and self.pf[i1+1][i2]):
+						count += 1
+		return count
+
+
+	def placedAmount(self):
+		count = 0
+		for row in self.pf:
+			for e in row:
+				if e:
+					count += 1
+		return count
+
+
 	def eval(self):
-		score = (2*self.hermit()) + self.highestPiece()
+		a = 1.5
+		b = 5
+		c = 2
+		score = (a*self.hermit()) + (b*self.highestPiece()) + (c*self.contig())
 		return score
 
 
@@ -247,12 +273,14 @@ def getPixels(twoDimArr, row, col, pointsToCheck):
 
 def test_all_x(state, rot):
 	low_score = 1000
+	in_for_score = 1000
 	idx = 0
 	max_x = state.w-Piece.findXOffset(rot)
 	#pure_state = copy.deepcopy(state)
 	for i in range(max_x):
 		temp_state = copy.deepcopy(state)
-		in_for_score = temp_state.fill(test(temp_state,rot,i)).eval()
+		if test(temp_state,rot,i):
+			in_for_score = temp_state.fill(test(temp_state,rot,i)).eval()
 		if(in_for_score<low_score):
 			low_score=in_for_score
 			idx = i
@@ -274,7 +302,7 @@ def test_all_rot_and_x(state,Piece):
 	return outstate
 
 
-b = Board(20, 10)
+b = Board(40, 20)
 
 factory = PieceFactory()
 p = Piece(PieceFactory.getPiecesDict()["l-2"])
