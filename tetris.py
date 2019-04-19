@@ -1,5 +1,5 @@
-import random
-import copy
+import random, copy, time
+
 
 
 class Board:
@@ -141,6 +141,7 @@ class State:
 		print "contig", self.contig()
 		print "height", self.highestPiece()
 		print "hermit", self.hermit()
+		print "aggH", self.aggHeight()
 
 
 	def fill(self, pts):
@@ -204,12 +205,23 @@ class State:
 					count += 1
 		return count
 
+	def aggHeight(self):
+		agg = 0
+		for i in range(self.w):
+			for j in range(self.h):
+				if self.pf[j][i]:
+					agg += self.h - j
+					break
+		return agg
+
+
 
 	def eval(self):
-		a = 1.5
-		b = 5
-		c = 2
-		score = (a*self.hermit()) + (b*self.highestPiece()) + (c*self.contig())
+		a = .5
+		b = 1
+		c = 1
+		d = 1
+		score = (a*self.hermit()) + (b*self.highestPiece()) + (c*self.contig()) + (d*self.aggHeight())
 		return score
 
 
@@ -302,7 +314,7 @@ def test_all_rot_and_x(state,Piece):
 	return outstate
 
 
-b = Board(40, 20)
+b = Board(24, 10)
 
 factory = PieceFactory()
 p = Piece(PieceFactory.getPiecesDict()["l-2"])
@@ -313,6 +325,7 @@ print("TESTING...Test_all_x-and_all_rot")
 for i in range(1000):
 	print ("Turn", i + 1)
 	s = test_all_rot_and_x(s,factory.nextPiece())
+	
 	s.printState()
 
 
