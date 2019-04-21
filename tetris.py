@@ -132,7 +132,10 @@ class State:
 
 	def copy(self):
 		new =  State(self.w, self.h)
-		new.pf = list(self.pf)
+		new.pf = [list(row) for row in self.pf]
 		return new
+
+
+
 
 
