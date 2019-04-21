@@ -85,6 +85,13 @@ class PieceFactory:
 			self.queuedPieces = list(self.possPieces)
 			return self.queuedPieces.pop()
 
+	def peekPiece(self):
+		if self.queuedPieces:
+			return self.queuedPieces[-1]
+		else:
+			random.shuffle(self.possPieces)
+			self.queuedPieces = list(self.possPieces)
+			return self.queuedPieces[-1]
 
 class State:
 	#board object stripped of methods, used to pass between
