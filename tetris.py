@@ -130,4 +130,9 @@ class State:
 	def isClearable(row):
 		return True if not [i for i in row if i != 1] else False
 
+	def copy(self):
+		new =  State(self.w, self.h)
+		new.pf = list(self.pf)
+		return new
+
 
