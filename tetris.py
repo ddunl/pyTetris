@@ -1,40 +1,5 @@
 import random, copy, time
 
-
-
-class Board:
-	def __init__ (self, h, w):
-		self.h = h
-		self.w = w
-		self.pf = [[0 for i in range(w)] for j in range(h)]
-
-	def clearRows(self):
-		for i, row in enumerate(self.pf):
-			if Board.isClearable(row):
-				self.pf.remove(row)
-				
-				self.pf = [[0 for i in range(self.w)]] + self.pf
-				
-
-
-	#checks if row is all solid blocks
-	@staticmethod
-	def isClearable(row):
-		return True if not [i for i in row if i != 1] else False
-
-	def printBoard(self):
-		h = [" ", "#", "@"]
-		for row in self.pf:
-			temp = ""
-			for ele in row:
-				temp += h[ele]
-			print ("|" + temp + "|")
-
-
-		print ("~"*(self.w + 2))
-		print 	
-
-
 class Piece:
 	""" represented by array of arbitrary size indicating 
 	what sqaures from a base square that is assumed to be bottom left are filled
@@ -77,7 +42,6 @@ class PieceFactory:
 	def __init__(self, bagLen = 1):
 		self.bagLen = 1
 		self.queuedPieces = []
-		#make pieces based on dict
 		self.possPieces = [Piece(value) for key, value in PieceFactory.getPiecesDict().iteritems()]
 
 
@@ -125,10 +89,10 @@ class PieceFactory:
 class State:
 	#board object stripped of methods, used to pass between
 	#eval and test functions
-	def __init__(self, board):
-		self.pf = board.pf
-		self.w = board.w
-		self.h = board.h
+	def __init__(self, w, h):
+		self.pf = self.pf = [[0 for i in range(w)] for j in range(h)]
+		self.w = w
+		self.h = h
 
 	def printState(self):
 		h = [" ", "#", "@"]
@@ -138,10 +102,6 @@ class State:
 				temp += h[ele]
 			print ("|" + temp + "|")
 		print ("~"*(self.w + 2))
-		print "contig", self.contig()
-		print "height", self.highestPiece()
-		print "hermit", self.hermit()
-		print "aggH", self.aggHeight()
 
 
 	def fill(self, pts):
@@ -163,211 +123,4 @@ class State:
 	def isClearable(row):
 		return True if not [i for i in row if i != 1] else False
 
-	""" Find the y location of highest piece for evaluation """
 
-	def highestPiece(self):
-		for i in range(self.h):
-			for j in range(self.w):
-				if (self.pf[i][j]==1):
-					return (self.h-i)
-		return 0
-
- 
-
-	""" Counts the caves in the current state """
-
-	def hermit(self):
-		count = 0
-		for i in range(self.h):
-			for j in range(self.w):
-				if (self.pf[i][j]==0):
-					#look above if above has piece then add to cave count
-					for k in range(i):
-						if (self.pf[k][j]==1):
-							count = count + 1
-		return count
-
-	def contig(self):
-		count = 0
-		for i1, row in enumerate(self.pf[1:-1]):
-			for i2, e in enumerate(row[1:-1]):
-				if e:
-					if not (self.pf[i1][i2-1] and self.pf[i1][i2+1] and self.pf[i1-1][i2] and self.pf[i1+1][i2]):
-						count += 1
-		return count
-
-
-	def placedAmount(self):
-		count = 0
-		for row in self.pf:
-			for e in row:
-				if e:
-					count += 1
-		return count
-
-	def aggHeight(self):
-		agg = 0
-		for i in range(self.w):
-			for j in range(self.h):
-				if self.pf[j][i]:
-					agg += self.h - j
-					break
-		return agg
-
-
-
-	def eval(self):
-		a = .5
-		b = 1
-		c = 1
-		d = 1
-		score = (a*self.hermit()) + (b*self.highestPiece()) + (c*self.contig()) + (d*self.aggHeight())
-		return score
-
-
-def evaluate(state):
-	score = 0
-	score = state.hermit() + state.highestPiece()
-	return score
-
-
-
-def test(state, rot, xval):
-	"""
-	takes state, a specific rotation of a piece,
-	xvalue for key pixel
-	returns a state with the piece hard dropped
-	(or false in the case that the piece can't be placed)
-	"""
-
-	depth = 0
-
-	max_x = Piece.findXOffset(rot)
-	if xval > max_x: # if x invalid, test fails
-		#return False
-		pass
-
-	if not getPixels(state.pf, xval, 0, rot):
-		return False
-	else:
-		lastValidPlacement = getPixels(state.pf, xval, 0, rot)
-
-	for yval in range(0, state.h - Piece.findYOffset(rot) + 1):
-		t = getPixels(state.pf, xval, yval, rot)
-		
-		if t:
-			lastValidPlacement = t
-		else:
-			return lastValidPlacement
-
-	return lastValidPlacement
-		
-
-
-def getPixels(twoDimArr, row, col, pointsToCheck):
-	#makes sure rot can be placed at certain key pixel,
-	#if so, returns the pixels it would occupy, else False
-
-	points = []
-	for x, y in pointsToCheck:
-		try: 
-			if twoDimArr[col + y][row + x]:
-				return False
-			else:
-				points.append((row + x, col + y))
-
-			
-		except IndexError: 
-			return False
-
-	return points
-
-
-def test_all_x(state, rot):
-	low_score = 1000
-	in_for_score = 1000
-	idx = 0
-	max_x = state.w-Piece.findXOffset(rot)
-	#pure_state = copy.deepcopy(state)
-	for i in range(max_x):
-		temp_state = copy.deepcopy(state)
-		if test(temp_state,rot,i):
-			in_for_score = temp_state.fill(test(temp_state,rot,i)).eval()
-		if(in_for_score<low_score):
-			low_score=in_for_score
-			idx = i
-	outstate = state.fill(test(state, rot, idx))
-	return outstate
-
-def test_all_rot_and_x(state,Piece):
-	loop_len = len(Piece.getRotations())
-	low_score=1000
-	idx = 0
-	for i in range(loop_len):
-		rot_piece = Piece.getRotations()[i]
-		temp_state = copy.deepcopy(state)
-		inner_score = test_all_x(temp_state,rot_piece).eval()
-		if (inner_score<low_score):
-			low_score = inner_score
-			idx = i 
-	outstate = test_all_x(state,Piece.getRotations()[idx])
-	return outstate
-
-
-b = Board(24, 10)
-
-factory = PieceFactory()
-p = Piece(PieceFactory.getPiecesDict()["l-2"])
-s = State(b)
-
-print("TESTING...Test_all_x-and_all_rot")
-
-for i in range(1000):
-	print ("Turn", i + 1)
-	s = test_all_rot_and_x(s,factory.nextPiece())
-	
-	s.printState()
-
-
-
-'''
-rot = p.getRotations()[1]
-print("Figure out rotations possible")
-print(len(p.getRotations()))
-
-
-
-
-
-s = test_all_x(s,rot)
-s = test_all_x(s,rot)
-s.printState()
-'''
-
-
-'''
-#state_two = copy.deepcopy(s)
-
-#state_two.fill(test(state_two, rot, 0))
-#s = test_all_x(s, rot)
-
-#state_two.printState()
-
-testing = s.w-Piece.findXOffset(rot)
-print("testing x offset")
-print(testing)
-
-
-print("tesing method after fill")
-print(s.fill(test(s, rot, 0)).eval())
-
-s.fill(test(s, rot, 0))
-
-value = evaluate(s)
-
-print(value)
-print("Calc using Methods")
-print(s.eval())
-
-s.printState()
-'''
