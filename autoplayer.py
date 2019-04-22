@@ -1,5 +1,7 @@
 from tetris import *
 from heuristics import *
+import sys
+
 
 
 def getPixels(twoDimArr, row, col, pointsToCheck):
@@ -52,50 +54,79 @@ def test(state, rot, xval):
 		
 
 
-def test_all_x(state, rot, evaluator):
-	low_score = 1000
-	in_for_score = 1000
-	idx = 0
-	max_x = state.w-Piece.findXOffset(rot)
-	#pure_state = copy.deepcopy(state)
-	for i in range(max_x):
-		temp_state = copy.deepcopy(state)
-		if test(temp_state,rot,i):
-			in_for_score = evaluator.evaluate(temp_state.fill(test(temp_state,rot,i)))
-		if(in_for_score<low_score):
-			low_score=in_for_score
-			idx = i
-	outstate = state.fill(test(state, rot, idx))
-	return outstate
+def getAllStates(state, piece):
+    allstates=[]
+
+    for rot in piece.getRotations():
+        for xval in range(state.w-piece.findXOffset(rot)):
+
+            free_state = state.copy()
+            if test(free_state,rot,xval):
+            	allstates.append(free_state.fill(test(free_state,rot,xval)))
+
+    return allstates
+
+
+def lookahead(stateList, piece, evaluator):
+	best = None
+	bestScore = None
+	for state in stateList:
+		fStateList = getAllStates(state, piece)
+		for fState in fStateList:
+			
+			if best is None or evaluator.evaluate(fState) < bestScore:
+				best = state
+				bestScore = evaluator.evaluate(fState)
+
+	return best
 
 
 
-def test_all_rot_and_x(state, piece, evaluator):
-	loop_len = len(piece.getRotations())
-	low_score=1000
-	idx = 0
-	for i in range(loop_len):
-		rot_piece = piece.getRotations()[i]
-		temp_state = copy.deepcopy(state)
-		inner_score = evaluator.evaluate(test_all_x(temp_state, rot_piece, evaluator))
-		if (inner_score<low_score):
-			low_score = inner_score
-			idx = i 
-	outstate = test_all_x(state, piece.getRotations()[idx], evaluator)
-	return outstate
 
 
 
-factory = PieceFactory()
 
-s = State(10, 24)
+# factory = PieceFactory()
 
-judge = Evaluator([aggHeight, highestPiece, contig, hermit], [3, 5, 2, .5])
+# s = State(10, 24)
 
-for i in range(1000):
-	print "Turn", i + 1
-	s = test_all_rot_and_x(s, factory.nextPiece(), judge)
-	s.printState()
+# judge = Evaluator([aggHeight, highestPiece, contig, hermit], [3, 5, 2, .5])
+# for i in range(20000):
+# 	s = lookahead(getAllStates(s, factory.nextPiece()), factory.peekPiece(), judge)
+
+# 	s.printState()
+# 	print i
+
+if __name__ == "__main__":
+	if len(sys.argv) == 1:
+		print "Takes BoardWidth, BoardHeight, \n aggHeight(rec: 3), highestPiece(rec : 5), contig(rec : 2), hermit(rec : .5) \n pieceAmount, \n lookAhead? (1/0)"
+		sys.exit()
+
+
+	f = PieceFactory()
+	bw = int(sys.argv[1])
+	bh = int(sys.argv[2])
+
+	s = State(bw, bh)
+
+	hWeights = [float(arg) for arg in sys.argv[3:7]]
+
+	e = Evaluator([aggHeight, highestPiece, contig, hermit], hWeights)
+
+	pieceAmount = int(sys.argv[7])
+
+	if int(sys.argv[8]):
+		for i in range(pieceAmount):
+			s = lookahead(getAllStates(s, f.nextPiece()), f.peekPiece(), e)
+			s.printState()
+			print i + 1
+
+	else:
+		for i in range(pieceAmount):
+			s = e.choose(getAllStates(s, f.nextPiece()))
+			s.printState()
+			print i + 1
+
 
 
 
