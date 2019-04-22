@@ -11,6 +11,9 @@ class Evaluator:
 
 	def evaluate(self, state):
 		return sum([func(state, c) for func, c in zip(self.funcList, self.cList)])
+
+	def choose(self, stateList):
+		return sorted([(state, self.evaluate(state)) for state in stateList], key = lambda x: x[1])[0][0]
 		
 
 
