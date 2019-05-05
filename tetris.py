@@ -42,7 +42,7 @@ class PieceFactory:
 	def __init__(self, bagLen = 1):
 		self.bagLen = 1
 		self.queuedPieces = []
-		self.possPieces = [Piece(value) for key, value in PieceFactory.getPiecesDict().iteritems()]
+		self.possPieces = [Piece(value) for key, value in PieceFactory.getPiecesDict().items()]
 
 
 	@staticmethod
@@ -102,13 +102,13 @@ class State:
 		self.h = h
 
 	def printState(self):
-		h = [" ", "#", "@"]
+		h = [u" ", u"█", "@"]
 		for row in self.pf:
-			temp = ""
+			temp = u""
 			for ele in row:
 				temp += h[ele]
-			print ("|" + temp + "|")
-		print ("~"*(self.w + 2))
+			print (u"|" + temp + u"|")
+		print (u"~"*(self.w + 2))
 
 
 	def fill(self, pts):
@@ -134,7 +134,6 @@ class State:
 		new =  State(self.w, self.h)
 		new.pf = [list(row) for row in self.pf]
 		return new
-
 
 
 
