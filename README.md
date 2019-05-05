@@ -3,7 +3,8 @@ Simple version of tetris with AI player.
 
 Must use python 3.
 
-Args:
+# Args:
+
   Board width: width of board
   
   Board height: height of board
